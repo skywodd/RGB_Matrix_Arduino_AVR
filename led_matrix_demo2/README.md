@@ -4,6 +4,7 @@
 Demonstration code using AVR registers access and some optimization tricks.
 Nearly identical to the demonstration code 1 but without any Arduino crap anymore.
 
-No too bad performances (5KHz refresh max). Usable for "real applications".
+Refresh routine execution time: 408µs (2.45KHz).
+Usable for "real applications" (but not really recommended).
 
-Please take a look at the demonstration code 3 (coming soon) for a little more optimized version (yes again).
+Please take a look at the demonstration code 3 for a more optimized version.
