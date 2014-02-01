@@ -2,7 +2,7 @@
 #include <MsTimer2.h>
 
 /* Compile time constants */
-static const byte NB_HORIZONTAL_MATRIX = 4;
+static const byte NB_HORIZONTAL_MATRIX = 2;
 static const byte NB_VERTICAL_MATRIX = 1;
 
 static const byte NB_LINES_PER_MATRIX = 32;
@@ -151,23 +151,23 @@ void loop() {
 
   // Demo code
   static byte x = 0;
-    static byte y = 0;
-    static byte color = COLOR_RED;
+  static byte y = 0;
+  static byte color = COLOR_RED;
 
-    setPixelAt(x, y, color);
+  setPixelAt(x, y, color);
 
-    if(++x == NB_COLUMNS_COUNT) {
-      x = 0;
+  if(++x == NB_COLUMNS_COUNT) {
+    x = 0;
 
-      if(++y == NB_LINES_COUNT) {
-        y = 0;
+    if(++y == NB_LINES_COUNT) {
+      y = 0;
 
-        if(color == COLOR_BLACK)
-          color = COLOR_RED;
-        else
-          ++color; 
-      }
+      if(color == COLOR_BLACK)
+        color = COLOR_RED;
+      else
+        ++color; 
     }
+  }
 
   // No flood delay
   delay(10);
