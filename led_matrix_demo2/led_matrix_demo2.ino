@@ -13,9 +13,37 @@ static const byte NB_LINES_COUNT = NB_VERTICAL_MATRIX * NB_LINES_PER_MATRIX;
 static const byte NB_COLUMNS_COUNT = NB_HORIZONTAL_MATRIX * NB_COLUMNS_PER_MATRIX;
 
 /* Pin mapping */
+#if defined(__AVR_ATmega2560__) // For Arduino Mega2560
+// R1, G1, B1, R2, G2, B2 hard-wired on PA2~PA7
+// A, B, C, D hard-wired on PF0~PF3
+// CLK, OE, LAT hard-wired on PB1~PB3
+#define DATA_PORT PORTA
+#define DATA_DDR DDRA
+#define ADDR_PORT PORTF
+#define ADDR_DDR DDRF
+#define CTRL_PORT PORTB
+#define CTRL_PIN PINB
+#define CTRL_DDR DDRB
+#define CTRL_BITOFFSET 1
+#define DEBUG_LED_SETUP() (DDRB |= 1 << 7, PORTB &= ~(1 << 7))
+#define DEBUG_LED_OFF() (PORTB &= ~(1 << 7))
+#define DEBUG_LED_ON() (PORTB |= 1 << 7)
+#else  // For Arduino UNO
 // R1, G1, B1, R2, G2, B2 hard-wired on PD2~PD7
 // A, B, C, D hard-wired on PC0~PC3
 // CLK, OE, LAT hard-wired on PB0~PB2
+#define DATA_PORT PORTD
+#define DATA_DDR DDRD
+#define ADDR_PORT PORTC
+#define ADDR_DDR DDRC
+#define CTRL_PORT PORTB
+#define CTRL_PIN PINB
+#define CTRL_DDR DDRB
+#define CTRL_BITOFFSET 0
+#define DEBUG_LED_SETUP() (DDRB |= 1 << 5, PORTB &= ~(1 << 5))
+#define DEBUG_LED_OFF() (PORTB &= ~(1 << 5))
+#define DEBUG_LED_ON() (PORTB |= 1 << 5)
+#endif
 
 /** 
  * Framebuffer for RGB
@@ -98,7 +126,7 @@ static void setPixelAt(const byte x, const byte y, const byte color) {
  * 
  * @param x X position of the pixel.
  * @param y Y position of the pixel.
- * @return The state of the pixel.
+ * @return The color of the pixel.
  */
 static byte getPixelAt(const byte x, const byte y) {
   volatile byte* pixel = framebuffer[y][x / 8];
@@ -129,14 +157,16 @@ void setup() {
 
   // Setup pins
   pinMode(13, OUTPUT);
-  DDRD = 0b11111100; // Data port
-  PORTD = 0;
+  DATA_DDR = 0b11111100; // Data port
+  DATA_PORT = 0;
 
-  DDRC = 0b1111; // Addr port
-  PORTC = 0;
+  ADDR_DDR = 0b1111; // Addr port
+  ADDR_PORT = 0;
 
-  DDRB = 0b100111; // Ctrl port + led pin13
-  PORTB = 0b10;
+  CTRL_DDR = 0b111 << CTRL_BITOFFSET; // Ctrl port
+  CTRL_PORT = 0b10 << CTRL_BITOFFSET;
+
+  DEBUG_LED_SETUP();
 
   // Init frame buffers (all pixels black)
   memset((void*) framebuffer, 0, NB_LINES_COUNT * (NB_COLUMNS_COUNT / 8) * 3);
@@ -180,8 +210,9 @@ void refreshDisplay() {
   static byte scanlineIndex = 0;
 
   // Setup control lines and address lines
-  PORTB = 0b100110;
-  PORTC = scanlineIndex;
+  CTRL_PORT = 0b110 << CTRL_BITOFFSET;
+  ADDR_PORT = scanlineIndex;
+  DEBUG_LED_ON();
 
   // For each vertical matrix
   for (int vMatrixIndex = NB_VERTICAL_MATRIX - 1; vMatrixIndex >= 0; --vMatrixIndex) {
@@ -213,15 +244,15 @@ void refreshDisplay() {
 
         // Shift out bits
         byte mask = 1 << bitIndex;
-        PORTD = (PORTD & 0b11) | (!!(r1 & mask) << 2) | (!!(g1 & mask) << 3) | (!!(b1 & mask) << 4)| (!!(r2 & mask) << 5) | (!!(g2 & mask) << 6) | (!!(b2 & mask) << 7);
-        PINB = 1;
-        PINB = 1; // CLK pulse
+        DATA_PORT = (DATA_PORT & 0b11) | (!!(r1 & mask) << 2) | (!!(g1 & mask) << 3) | (!!(b1 & mask) << 4)| (!!(r2 & mask) << 5) | (!!(g2 & mask) << 6) | (!!(b2 & mask) << 7);
+        CTRL_PIN = 1 << CTRL_BITOFFSET;
+        CTRL_PIN = 1 << CTRL_BITOFFSET; // CLK pulse
       }
     }
   }
 
   // Trigger latch
-  PORTB = 0;
+  CTRL_PORT = 0;
 
   // Handle scan line overflow
   if (++scanlineIndex == MATRIX_SCANLINE_SIZE) {
@@ -229,4 +260,6 @@ void refreshDisplay() {
     // Reset scan line index
     scanlineIndex = 0;
   }
+
+  DEBUG_LED_OFF();
 }
