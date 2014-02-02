@@ -10,19 +10,35 @@ static const byte NB_LINES_COUNT = NB_VERTICAL_MATRIX * NB_LINES_PER_MATRIX;
 static const byte NB_COLUMNS_COUNT = NB_HORIZONTAL_MATRIX * NB_COLUMNS_PER_MATRIX;
 
 /* Pin mapping */
-static const byte PIN_R1 = 2;   // R1
-static const byte PIN_G1 = 3;   // G1
-static const byte PIN_B1 = 4;   // B1
-static const byte PIN_R2 = 5;   // R2
-static const byte PIN_G2 = 6;   // G2
-static const byte PIN_B2 = 7;   // B2
-static const byte PIN_A = A0;   // A
-static const byte PIN_B = A1;   // B
-static const byte PIN_C = A2;   // C
-static const byte PIN_D = A3;   // D
-static const byte PIN_CLK = 8;  // CLK
-static const byte PIN_OE = 9;   // OE
-static const byte PIN_LAT = 10; // LAT
+#if defined(__AVR_ATmega2560__) // Mega2560
+	static const byte PIN_R1 = 24;  // R1
+	static const byte PIN_G1 = 25;  // G1
+	static const byte PIN_B1 = 26;  // B1
+	static const byte PIN_R2 = 27;  // R2
+	static const byte PIN_G2 = 28;  // G2
+	static const byte PIN_B2 = 29;  // B2
+	static const byte PIN_A = A0;   // A
+	static const byte PIN_B = A1;   // B
+	static const byte PIN_C = A2;   // C
+	static const byte PIN_D = A3;   // D
+	static const byte PIN_CLK = 50; // CLK
+	static const byte PIN_OE = 51;  // OE
+	static const byte PIN_LAT = 52;	// LAT
+#else // UNO
+	static const byte PIN_R1 = 2;   // R1
+	static const byte PIN_G1 = 3;   // G1
+	static const byte PIN_B1 = 4;   // B1
+	static const byte PIN_R2 = 5;   // R2
+	static const byte PIN_G2 = 6;   // G2
+	static const byte PIN_B2 = 7;   // B2
+	static const byte PIN_A = A0;   // A
+	static const byte PIN_B = A1;   // B
+	static const byte PIN_C = A2;   // C
+	static const byte PIN_D = A3;   // D
+	static const byte PIN_CLK = 8;  // CLK
+	static const byte PIN_OE = 9;   // OE
+	static const byte PIN_LAT = 10; // LAT
+#endif
 
 /** 
  * Framebuffer for RGB
