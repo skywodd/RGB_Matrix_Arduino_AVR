@@ -16,22 +16,23 @@ static const byte NB_COLUMNS_COUNT = NB_HORIZONTAL_MATRIX * NB_COLUMNS_PER_MATRI
 #if defined(__AVR_ATmega2560__) // For Arduino Mega2560
 // R1, G1, B1, R2, G2, B2 hard-wired on PA2~PA7
 // A, B, C, D hard-wired on PF0~PF3
-// CLK, OE, LAT hard-wired on PB1~PB3
+// CLK, OE, LAT hard-wired on PB3~PB1 and LED PB7
 #define DATA_PORT PORTA
 #define DATA_DDR DDRA
 #define ADDR_PORT PORTF
-#define ADDR_DDR DDRF
+#define ADDR_DDR DDRF 
 #define CTRL_PORT PORTB
 #define CTRL_PIN PINB
 #define CTRL_DDR DDRB
-#define CTRL_BITOFFSET 1
-#define DEBUG_LED_SETUP() (DDRB |= 1 << 7, PORTB &= ~(1 << 7))
-#define DEBUG_LED_OFF() (PORTB &= ~(1 << 7))
-#define DEBUG_LED_ON() (PORTB |= 1 << 7)
+#define CTRL_MASK 0b10001110
+#define CTRL_CLK_PIN (1 << 3)
+#define CTRL_OE_PIN (1 << 2)
+#define CTRL_LAT_PIN (1 << 1)
+#define CTRL_LED_PIN (1 << 7)
 #else  // For Arduino UNO
 // R1, G1, B1, R2, G2, B2 hard-wired on PD2~PD7
 // A, B, C, D hard-wired on PC0~PC3
-// CLK, OE, LAT hard-wired on PB0~PB2
+// CLK, OE, LAT hard-wired on PB0~PB2 and LED PB5
 #define DATA_PORT PORTD
 #define DATA_DDR DDRD
 #define ADDR_PORT PORTC
@@ -39,10 +40,11 @@ static const byte NB_COLUMNS_COUNT = NB_HORIZONTAL_MATRIX * NB_COLUMNS_PER_MATRI
 #define CTRL_PORT PORTB
 #define CTRL_PIN PINB
 #define CTRL_DDR DDRB
-#define CTRL_BITOFFSET 0
-#define DEBUG_LED_SETUP() (DDRB |= 1 << 5, PORTB &= ~(1 << 5))
-#define DEBUG_LED_OFF() (PORTB &= ~(1 << 5))
-#define DEBUG_LED_ON() (PORTB |= 1 << 5)
+#define CTRL_MASK 0b100111
+#define CTRL_CLK_PIN (1 << 0)
+#define CTRL_OE_PIN (1 << 1)
+#define CTRL_LAT_PIN (1 << 2)
+#define CTRL_LED_PIN (1 << 5)
 #endif
 
 /** 
@@ -170,17 +172,14 @@ static byte getPixelAt(const byte x, const byte y, const byte color) {
 void setup() {
 
   // Setup pins
-  pinMode(13, OUTPUT);
-  DATA_DDR = 0b11111100; // Data port
-  DATA_PORT = 0;
+  DATA_DDR |= 0b11111100; // Data port
+  DATA_PORT = DATA_PORT & 0b11;
 
-  ADDR_DDR = 0b1111; // Addr port
-  ADDR_PORT = 0;
+  ADDR_DDR |= 0b1111; // Addr port
+  ADDR_PORT = ADDR_PORT & 0b11110000;
 
-  CTRL_DDR = 0b111 << CTRL_BITOFFSET; // Ctrl port
-  CTRL_PORT = 0b10 << CTRL_BITOFFSET;
-
-  DEBUG_LED_SETUP();
+  CTRL_DDR |= CTRL_MASK; // Ctrl port + debug led
+  CTRL_PORT = (CTRL_PORT & ~CTRL_MASK) | CTRL_OE_PIN;
   
   // Init frame buffers (all pixels black)
   memset((void*) framebuffer, 0, NB_LINES_COUNT * (NB_COLUMNS_COUNT / 8) * 3);
@@ -233,29 +232,29 @@ static void sendColumnBundle(byte **lineBufferPtr) {
 
   // MSB FIRST
   DATA_PORT = (DATA_PORT & 0b11) | (!!(r1 & 128) << 2) | (!!(g1 & 128) << 3) | (!!(b1 & 128) << 4) | (!!(r2 & 128) << 5) | (!!(g2 & 128) << 6) | (!!(b2 & 128) << 7);
-  CTRL_PIN = 1 << CTRL_BITOFFSET;
-  CTRL_PIN = 1 << CTRL_BITOFFSET; // CLK pulse
+  CTRL_PIN = CTRL_CLK_PIN;
+  CTRL_PIN = CTRL_CLK_PIN; // CLK pulse
   DATA_PORT = (DATA_PORT & 0b11) | (!!(r1 & 64) << 2) | (!!(g1 & 64) << 3) | (!!(b1 & 64) << 4) | (!!(r2 & 64) << 5) | (!!(g2 & 64) << 6) | (!!(b2 & 64) << 7);
-  CTRL_PIN = 1 << CTRL_BITOFFSET;
-  CTRL_PIN = 1 << CTRL_BITOFFSET; // CLK pulse
+  CTRL_PIN = CTRL_CLK_PIN;
+  CTRL_PIN = CTRL_CLK_PIN; // CLK pulse
   DATA_PORT = (DATA_PORT & 0b11) | (!!(r1 & 32) << 2) | (!!(g1 & 32) << 3) | (!!(b1 & 32) << 4) | (!!(r2 & 32) << 5) | (!!(g2 & 32) << 6) | (!!(b2 & 32) << 7);
-  CTRL_PIN = 1 << CTRL_BITOFFSET;
-  CTRL_PIN = 1 << CTRL_BITOFFSET; // CLK pulse
+  CTRL_PIN = CTRL_CLK_PIN;
+  CTRL_PIN = CTRL_CLK_PIN; // CLK pulse
   DATA_PORT = (DATA_PORT & 0b11) | (!!(r1 & 16) << 2) | (!!(g1 & 16) << 3) | (!!(b1 & 16) << 4) | (!!(r2 & 16) << 5) | (!!(g2 & 16) << 6) | (!!(b2 & 16) << 7);
-  CTRL_PIN = 1 << CTRL_BITOFFSET;
-  CTRL_PIN = 1 << CTRL_BITOFFSET; // CLK pulse
+  CTRL_PIN = CTRL_CLK_PIN;
+  CTRL_PIN = CTRL_CLK_PIN; // CLK pulse
   DATA_PORT = (DATA_PORT & 0b11) | (!!(r1 & 8) << 2) | (!!(g1 & 8) << 3) | (!!(b1 & 8) << 4) | (!!(r2 & 8) << 5) | (!!(g2 & 8) << 6) | (!!(b2 & 8) << 7);
-  CTRL_PIN = 1 << CTRL_BITOFFSET;
-  CTRL_PIN = 1 << CTRL_BITOFFSET; // CLK pulse
+  CTRL_PIN = CTRL_CLK_PIN;
+  CTRL_PIN = CTRL_CLK_PIN; // CLK pulse
   DATA_PORT = (DATA_PORT & 0b11) | (!!(r1 & 4) << 2) | (!!(g1 & 4) << 3) | (!!(b1 & 4) << 4) | (!!(r2 & 4) << 5) | (!!(g2 & 4) << 6) | (!!(b2 & 4) << 7);
-  CTRL_PIN = 1 << CTRL_BITOFFSET;
-  CTRL_PIN = 1 << CTRL_BITOFFSET; // CLK pulse
+  CTRL_PIN = CTRL_CLK_PIN;
+  CTRL_PIN = CTRL_CLK_PIN; // CLK pulse
   DATA_PORT = (DATA_PORT & 0b11) | (!!(r1 & 2) << 2) | (!!(g1 & 2) << 3) | (!!(b1 & 2) << 4) | (!!(r2 & 2) << 5) | (!!(g2 & 2) << 6) | (!!(b2 & 2) << 7);
-  CTRL_PIN = 1 << CTRL_BITOFFSET;
-  CTRL_PIN = 1 << CTRL_BITOFFSET; // CLK pulse
+  CTRL_PIN = CTRL_CLK_PIN;
+  CTRL_PIN = CTRL_CLK_PIN; // CLK pulse
   DATA_PORT = (DATA_PORT & 0b11) | (!!(r1 & 1) << 2) | (!!(g1 & 1) << 3) | (!!(b1 & 1) << 4) | (!!(r2 & 1) << 5) | (!!(g2 & 1) << 6) | (!!(b2 & 1) << 7);
-  CTRL_PIN = 1 << CTRL_BITOFFSET;
-  CTRL_PIN = 1 << CTRL_BITOFFSET; // CLK pulse
+  CTRL_PIN = CTRL_CLK_PIN;
+  CTRL_PIN = CTRL_CLK_PIN; // CLK pulse
 }
 
 /** Display scaline refresh routine */
@@ -265,9 +264,8 @@ void refreshDisplay() {
   static byte scanlineIndex = 0;
 
   // Setup control lines and address lines
-  CTRL_PORT = 0b110 << CTRL_BITOFFSET;
-  ADDR_PORT = scanlineIndex;
-  DEBUG_LED_ON();
+  CTRL_PORT = (CTRL_PORT & ~CTRL_MASK) | CTRL_OE_PIN | CTRL_LAT_PIN | CTRL_LED_PIN;
+  ADDR_PORT = (ADDR_PORT & 0b11110000) | scanlineIndex;
 
   // Get line buffer
   byte *lineBuffer = (byte*) framebuffer[scanlineIndex];
@@ -304,7 +302,7 @@ void refreshDisplay() {
   }
 
   // Trigger latch
-  CTRL_PORT = 0;
+  CTRL_PORT = CTRL_PORT & ~CTRL_MASK;
 
   // Handle scan line overflow
   if (++scanlineIndex == MATRIX_SCANLINE_SIZE) {
@@ -312,6 +310,4 @@ void refreshDisplay() {
     // Reset scan line index
     scanlineIndex = 0;
   }
-  
-  DEBUG_LED_OFF();
 }
