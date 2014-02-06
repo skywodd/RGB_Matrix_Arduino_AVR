@@ -24,7 +24,6 @@ static const byte NB_COLUMNS_COUNT = NB_HORIZONTAL_MATRIX * NB_COLUMNS_PER_MATRI
 #define CTRL_PORT PORTB
 #define CTRL_PIN PINB
 #define CTRL_DDR DDRB
-#define CTRL_MASK 0b10001110
 #define CTRL_CLK_PIN (1 << 3)
 #define CTRL_OE_PIN (1 << 2)
 #define CTRL_LAT_PIN (1 << 1)
@@ -40,12 +39,12 @@ static const byte NB_COLUMNS_COUNT = NB_HORIZONTAL_MATRIX * NB_COLUMNS_PER_MATRI
 #define CTRL_PORT PORTB
 #define CTRL_PIN PINB
 #define CTRL_DDR DDRB
-#define CTRL_MASK 0b100111
 #define CTRL_CLK_PIN (1 << 0)
 #define CTRL_OE_PIN (1 << 1)
 #define CTRL_LAT_PIN (1 << 2)
 #define CTRL_LED_PIN (1 << 5)
 #endif
+#define CTRL_MASK (CTRL_CLK_PIN | CTRL_OE_PIN | CTRL_LAT_PIN  | CTRL_LED_PIN)
 
 /** 
  * Framebuffer for RGB
