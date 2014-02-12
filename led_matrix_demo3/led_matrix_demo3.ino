@@ -143,7 +143,7 @@ static void setPixelAt(const byte x, const byte y, const byte color) {
  * @param y Y position of the pixel.
  * @return The color of the pixel.
  */
-static byte getPixelAt(const byte x, const byte y, const byte color) {
+static byte getPixelAt(const byte x, const byte y) {
   volatile byte* pixel = framebuffer[y & (MATRIX_SCANLINE_SIZE - 1)] + matrixLinearOffset(x, y);
   byte mask = 1 << (x & 7);
   byte r = !!(pixel[0] & mask);

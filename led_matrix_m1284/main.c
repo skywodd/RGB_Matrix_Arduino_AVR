@@ -111,7 +111,7 @@ static void setPixelAt(const uint8_t x, const uint8_t y, const uint8_t color) {
  * @param y Y position of the pixel.
  * @return The color of the pixel.
  */
-static uint8_t getPixelAt(const uint8_t x, const uint8_t y, const uint8_t color) {
+static uint8_t getPixelAt(const uint8_t x, const uint8_t y) {
  volatile uint8_t pixel = framebuffer[y & (MATRIX_SCANLINE_SIZE - 1)][(NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT) - 1 - (x + (y / NB_LINES_PER_MATRIX * NB_COLUMNS_COUNT))];
   uint8_t bitsOffset = ((y & (NB_LINES_PER_MATRIX - 1)) > 15) ? 3 : 0;
   const uint8_t colorTable[] = {
