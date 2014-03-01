@@ -33,7 +33,7 @@ static const uint8_t NB_COLUMNS_COUNT = NB_HORIZONTAL_MATRIX * NB_COLUMNS_PER_MA
 #define CTRL_OE_PIN (1 << 2)
 #define CTRL_LAT_PIN (1 << 1)
 #define CTRL_LED_PIN (1 << 7)
-#elif defined(__AVR_ATmega1284__) // For DIY controller board
+#elif defined(__AVR_ATmega1284P__) // For DIY controller board
 // R1, G1, B1, R2, G2, B2 hard-wired on PC2~PC7
 // LED, CLK, LAT, OE hard-wired on PD4~PD7
 // A, B, C, D hard-wired on PB0~PB3
