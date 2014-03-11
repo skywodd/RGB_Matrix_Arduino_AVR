@@ -24,6 +24,20 @@ static const byte PIN_D = A3;   // D
 static const byte PIN_CLK = 50; // CLK
 static const byte PIN_OE = 51;  // OE
 static const byte PIN_LAT = 52;	// LAT
+#elif defined(__AVR_ATmega1284P__) // ATmega1284P based board
+static const byte PIN_R1 = 18;  // R1
+static const byte PIN_G1 = 19;  // G1
+static const byte PIN_B1 = 20;  // B1
+static const byte PIN_R2 = 21;  // R2
+static const byte PIN_G2 = 22;  // G2
+static const byte PIN_B2 = 23;  // B2
+static const byte PIN_A = 0;    // A
+static const byte PIN_B = 1;    // B
+static const byte PIN_C = 2;    // C
+static const byte PIN_D = 3;    // D
+static const byte PIN_CLK = 13; // CLK
+static const byte PIN_OE = 15;  // OE
+static const byte PIN_LAT = 14; // LAT
 #else // UNO
 static const byte PIN_R1 = 2;   // R1
 static const byte PIN_G1 = 3;   // G1

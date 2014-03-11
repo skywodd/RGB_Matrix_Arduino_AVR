@@ -28,6 +28,21 @@ static const byte NB_COLUMNS_COUNT = NB_HORIZONTAL_MATRIX * NB_COLUMNS_PER_MATRI
 #define CTRL_OE_PIN (1 << 2)
 #define CTRL_LAT_PIN (1 << 1)
 #define CTRL_LED_PIN (1 << 7)
+#elif defined(__AVR_ATmega1284P__) // For ATmega1284P based controller board
+// R1, G1, B1, R2, G2, B2 hard-wired on PC2~PC7
+// LED, CLK, LAT, OE hard-wired on PD4~PD7
+// A, B, C, D hard-wired on PB0~PB3
+#define DATA_DDR DDRC
+#define DATA_PORT PORTC
+#define ADDR_DDR DDRB 
+#define ADDR_PORT PORTB
+#define CTRL_DDR DDRD
+#define CTRL_PIN PIND
+#define CTRL_PORT PORTD
+#define CTRL_LED_PIN (1 << 4)
+#define CTRL_CLK_PIN (1 << 5)
+#define CTRL_LAT_PIN (1 << 6)
+#define CTRL_OE_PIN (1 << 7)
 #else  // For Arduino UNO
 // R1, G1, B1, R2, G2, B2 hard-wired on PD2~PD7
 // A, B, C, D hard-wired on PC0~PC3
