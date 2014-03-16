@@ -78,14 +78,14 @@ static volatile uint8_t framebuffer[MATRIX_SCANLINE_SIZE][NB_VERTICAL_MATRIX * N
  * Possible color enumeration
  */
 enum {
-  COLOR_RED,
-  COLOR_GREEN,
-  COLOR_BLUE,
-  COLOR_YELLOW,
-  COLOR_CYAN,
-  COLOR_PINK,
-  COLOR_WHITE,
-  COLOR_BLACK  
+  COLOR_RED,    // R
+  COLOR_GREEN,  // G
+  COLOR_BLUE,   // B
+  COLOR_YELLOW, // R + G
+  COLOR_CYAN,   // G + B
+  COLOR_PINK,   // R + B
+  COLOR_WHITE,  // R + G + B
+  COLOR_BLACK   // nothing
 };
 
 /**
@@ -97,9 +97,10 @@ enum {
  */
 static void setPixelAt(const uint8_t x, const uint8_t y, const uint8_t color) {
   volatile uint8_t* pixel = &framebuffer[y & (MATRIX_SCANLINE_SIZE - 1)][(NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT) - 1 - (x + (y / NB_LINES_PER_MATRIX * NB_COLUMNS_COUNT))];
-  uint8_t bitsOffset = ((y & (NB_LINES_PER_MATRIX - 1)) > 15) ? 3 : 0;
+  uint8_t bitsOffset = ((y & (NB_LINES_PER_MATRIX - 1)) > 15) ? 5 : 2;
   const uint8_t colorTable[] = {
-    0b100, 0b010, 0b001, 0b110, 0b011, 0b101, 0b111, 0b000
+    // COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_YELLOW, COLOR_CYAN, COLOR_PINK, COLOR_WHITE, COLOR_BLACK
+       0b001,     0b010,       0b100,      0b011,        0b110,      0b101,      0b111,       0b000
   };
   *pixel = (*pixel & ~(0b111 << bitsOffset)) | (colorTable[color] << bitsOffset);
 }
@@ -112,12 +113,12 @@ static void setPixelAt(const uint8_t x, const uint8_t y, const uint8_t color) {
  * @return The color of the pixel.
  */
 static uint8_t getPixelAt(const uint8_t x, const uint8_t y) {
- volatile uint8_t pixel = framebuffer[y & (MATRIX_SCANLINE_SIZE - 1)][(NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT) - 1 - (x + (y / NB_LINES_PER_MATRIX * NB_COLUMNS_COUNT))];
-  uint8_t bitsOffset = ((y & (NB_LINES_PER_MATRIX - 1)) > 15) ? 3 : 0;
+  uint8_t pixel = framebuffer[y & (MATRIX_SCANLINE_SIZE - 1)][(NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT) - 1 - (x + (y / NB_LINES_PER_MATRIX * NB_COLUMNS_COUNT))];
+  uint8_t bitsOffset = ((y & (NB_LINES_PER_MATRIX - 1)) > 15) ? 5 : 2;
   const uint8_t colorTable[] = {
-    COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_CYAN, COLOR_RED, COLOR_PINK, COLOR_YELLOW, COLOR_WHITE
+    COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE, COLOR_PINK, COLOR_CYAN, COLOR_WHITE
   };
-  return colorTable[pixel >> bitsOffset];
+  return colorTable[(pixel >> bitsOffset) & 3];
 }
 
 /**
