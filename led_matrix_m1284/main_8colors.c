@@ -6,10 +6,8 @@
 #include <string.h>        /* For memset() */
 
 /* Compile time constants */
-static const uint8_t NB_HORIZONTAL_MATRIX = 1;
+static const uint8_t NB_HORIZONTAL_MATRIX = 2;
 static const uint8_t NB_VERTICAL_MATRIX = 1;
-
-static const uint8_t NB_RESOLUTION_BITS = 3;
 
 static const uint8_t NB_LINES_PER_MATRIX = 32;   // MUST be 32 (hard-coded assembly)
 static const uint8_t NB_COLUMNS_PER_MATRIX = 32; // MUST be 32 (hard-coded assembly)
@@ -74,90 +72,69 @@ static const uint8_t NB_COLUMNS_COUNT = NB_HORIZONTAL_MATRIX * NB_COLUMNS_PER_MA
  * Array format : [scan line index] [column data stream]
  * Data format : ... [R1 G1 B1, R2, G2, B2, x, x] ...
  */
-static volatile uint8_t framebuffer[MATRIX_SCANLINE_SIZE * NB_RESOLUTION_BITS][NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT];
+static volatile uint8_t framebuffer[MATRIX_SCANLINE_SIZE][NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT];
+
+/**
+ * Possible color enumeration
+ */
+enum {
+  COLOR_RED,    // R
+  COLOR_GREEN,  // G
+  COLOR_BLUE,   // B
+  COLOR_YELLOW, // R + G
+  COLOR_CYAN,   // G + B
+  COLOR_PINK,   // R + B
+  COLOR_WHITE,  // R + G + B
+  COLOR_BLACK   // nothing
+};
 
 /**
  * Set the color of a pixel in the framebuffer.
  * 
  * @param x X position of the pixel.
  * @param y Y position of the pixel.
- * @param r Color to set (Red).
- * @param g Color to set (Green).
- * @param b Color to set (Blue).
+ * @param Color Color to set.
  */
-static void setPixelAt(const uint8_t x, const uint8_t y, const uint8_t r, const uint8_t g, const uint8_t b) {
-  
-  /* Viva el offset */
-  uint16_t pixelOffset = (NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT) - 1 - (x + (y / NB_LINES_PER_MATRIX * NB_COLUMNS_COUNT));
-  uint8_t scanlineOffset = y & (MATRIX_SCANLINE_SIZE - 1);
+static void setPixelAt(const uint8_t x, const uint8_t y, const uint8_t color) {
+  volatile uint8_t* pixel = &framebuffer[y & (MATRIX_SCANLINE_SIZE - 1)][(NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT) - 1 - (x + (y / NB_LINES_PER_MATRIX * NB_COLUMNS_COUNT))];
   uint8_t bitsOffset = ((y & (NB_LINES_PER_MATRIX - 1)) > 15) ? 5 : 2;
-  
-  /* Resolution bit 0 */
-  volatile uint8_t* pixel0 = &framebuffer[scanlineOffset][pixelOffset];
-  *pixel0 = (*pixel0 & ~(0b111 << bitsOffset)) | (!!(r & 1) << bitsOffset) | (!!(g & 1) << (bitsOffset + 1)) | (!!(b & 1) << (bitsOffset + 2));
-  
-  /* Resolution bit 1 */
-  if(NB_RESOLUTION_BITS > 1) {
-    volatile uint8_t* pixel1 = &framebuffer[scanlineOffset + MATRIX_SCANLINE_SIZE][pixelOffset];
-    *pixel1 = (*pixel1 & ~(0b111 << bitsOffset)) | (!!(r & 2) << bitsOffset) | (!!(g & 2) << (bitsOffset + 1)) | (!!(b & 2) << (bitsOffset + 2));
-  }
-  
-  /* Resolution bit 2 */
-  if(NB_RESOLUTION_BITS > 2) {
-    volatile uint8_t* pixel2 = &framebuffer[scanlineOffset + MATRIX_SCANLINE_SIZE * 2][pixelOffset];
-    *pixel2 = (*pixel2 & ~(0b111 << bitsOffset)) | (!!(r & 4) << bitsOffset) | (!!(g & 4) << (bitsOffset + 1)) | (!!(b & 4) << (bitsOffset + 2));
-  }
-  
-  /* Resolution bit 3 */
-  if(NB_RESOLUTION_BITS > 3) {
-    volatile uint8_t* pixel3 = &framebuffer[scanlineOffset + MATRIX_SCANLINE_SIZE * 3][pixelOffset];
-    *pixel3 = (*pixel3 & ~(0b111 << bitsOffset)) | (!!(r & 8) << bitsOffset) | (!!(g & 8) << (bitsOffset + 1)) | (!!(b & 8) << (bitsOffset + 2));
-  }
-  
-  /* Resolution bit 4 */
-  if(NB_RESOLUTION_BITS > 4) {
-    volatile uint8_t* pixel4 = &framebuffer[scanlineOffset + MATRIX_SCANLINE_SIZE * 4][pixelOffset];
-    *pixel4 = (*pixel4 & ~(0b111 << bitsOffset)) | (!!(r & 16) << bitsOffset) | (!!(g & 16) << (bitsOffset + 1)) | (!!(b & 16) << (bitsOffset + 2));
-  }
+  const uint8_t colorTable[] = {
+    // COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_YELLOW, COLOR_CYAN, COLOR_PINK, COLOR_WHITE, COLOR_BLACK
+       0b001,     0b010,       0b100,      0b011,        0b110,      0b101,      0b111,       0b000
+  };
+  *pixel = (*pixel & ~(0b111 << bitsOffset)) | (colorTable[color] << bitsOffset);
+}
+
+/**
+ * Get the color of a pixel in the framebuffer.
+ * 
+ * @param x X position of the pixel.
+ * @param y Y position of the pixel.
+ * @return The color of the pixel.
+ */
+static uint8_t getPixelAt(const uint8_t x, const uint8_t y) {
+  uint8_t pixel = framebuffer[y & (MATRIX_SCANLINE_SIZE - 1)][(NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT) - 1 - (x + (y / NB_LINES_PER_MATRIX * NB_COLUMNS_COUNT))];
+  uint8_t bitsOffset = ((y & (NB_LINES_PER_MATRIX - 1)) > 15) ? 5 : 2;
+  const uint8_t colorTable[] = {
+    COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE, COLOR_PINK, COLOR_CYAN, COLOR_WHITE
+  };
+  return colorTable[(pixel >> bitsOffset) & 3];
 }
 
 /**
  * Interruption routine - line refresh at 60Hz
  */
-ISR(TIMER3_COMPA_vect) {
+ISR(TIMER2_COMPA_vect) {
 
-  // Scan line index & resolution bit index
-  static uint8_t scanlineIndex = MATRIX_SCANLINE_SIZE - 1;
-  static uint8_t resolutionBitIndex = NB_RESOLUTION_BITS - 1;
-  
-  // Handle resolution bit index overflow
-  if (++resolutionBitIndex == NB_RESOLUTION_BITS) {
-	
-	// Reset resolution bit index
-	resolutionBitIndex = 0;
-	
-	// Reset timer prescaler
-	OCR3A = (F_CPU / 60 / 16 / ((1 << NB_RESOLUTION_BITS) - 1)) - 1;
-	
-    // Handle scanline index overflow
-    if (++scanlineIndex == MATRIX_SCANLINE_SIZE) {
+  // Scan line index
+  static uint8_t scanlineIndex = 0;
 
-	  // Reset scanline index counter
-	  scanlineIndex = 0;
-    }
-	
-  } else {
-	
-    // Divide frequency by two
-    OCR3A <<= 1;
-  }
-  
   // Setup control lines and address lines
   CTRL_PORT = (CTRL_PORT & ~CTRL_MASK) | CTRL_OE_PIN | CTRL_LAT_PIN | CTRL_LED_PIN;
   ADDR_PORT = (ADDR_PORT & 0b11110000) | scanlineIndex;
 
   // Get line buffer
-  uint8_t *lineBuffer = (uint8_t*) framebuffer[scanlineIndex + resolutionBitIndex * MATRIX_SCANLINE_SIZE];
+  uint8_t *lineBuffer = (uint8_t*) framebuffer[scanlineIndex];
 
   // Constant variable for the inline assembly
   const uint8_t clkPinMask = CTRL_CLK_PIN; // CLK pin mask
@@ -196,6 +173,13 @@ ISR(TIMER3_COMPA_vect) {
 
   // Trigger latch
   CTRL_PORT = CTRL_PORT & ~CTRL_MASK;
+
+  // Handle scan line overflow
+  if (++scanlineIndex == MATRIX_SCANLINE_SIZE) {
+
+    // Reset scan line index
+    scanlineIndex = 0;
+  }
 }
 
 /** Main */
@@ -212,16 +196,15 @@ int main(void) {
   CTRL_PORT = (CTRL_PORT & ~CTRL_MASK) | CTRL_OE_PIN | CTRL_LAT_PIN;
 
   /* Init the framebuffer (all pixels black) */
-  memset((void*) framebuffer, 0, MATRIX_SCANLINE_SIZE * NB_RESOLUTION_BITS * NB_MATRIX_COUNT * NB_COLUMNS_COUNT);
+  memset((void*) framebuffer, 0, MATRIX_SCANLINE_SIZE * NB_MATRIX_COUNT * NB_COLUMNS_COUNT);
   
   /* Setup refresh timer */
   cli();
-  TCCR3A = 0;                      // CTC mode
-  TCCR3B = _BV(WGM32) | _BV(CS30); // No prescaler
-  TCCR3C = 0;
-  TCNT3 = 0;                       // Counter reset
-  OCR3A = (F_CPU / 60 / 16 / ((1 << NB_RESOLUTION_BITS) - 1)) - 1; // ISR
-  TIMSK3 = _BV(OCIE3A);            // Enable timer 3's compare match A ISR
+  TCCR2A = _BV(WGM21);             // CTC mode
+  TCCR2B = _BV(CS22) | _BV(CS21);  // Prescaler /256
+  TCNT2 = 0;                       // Counter reset
+  OCR2A = (F_CPU / 256 / 960) - 1; // 960Hz ISR
+  TIMSK2 = _BV(OCIE2A);            // Enable timer 2's compare match A ISR
   sei();
   
   /* Main loop */
@@ -230,35 +213,25 @@ int main(void) {
     // Demo code
     static uint8_t x = 0;
     static uint8_t y = 0;
-    static uint8_t r = 0;
-    static uint8_t g = 0;
-    static uint8_t b = 0;
+    static uint8_t color = COLOR_RED;
 
-    setPixelAt(x, y, r, g, b);
+    setPixelAt(x, y, color);
 
     if(++x == NB_COLUMNS_COUNT) {
       x = 0;
 
       if(++y == NB_LINES_COUNT) {
         y = 0;
-      }
-    }
-	
-	/* Draw color pattern */
-	if(++r == (1 << NB_RESOLUTION_BITS)) {
-      r = 0;
-		  
-	  if(++g == (1 << NB_RESOLUTION_BITS)) {
-        g = 0;
-		  
-		if(++b == (1 << NB_RESOLUTION_BITS)) {
-          b = 0;
-        }
+
+        if(color == COLOR_BLACK)
+          color = COLOR_RED;
+        else
+          ++color; 
       }
     }
 
     // No flood delay
-    _delay_ms(1);
+    _delay_ms(10);
   }
   
   /* Compiler fix */
