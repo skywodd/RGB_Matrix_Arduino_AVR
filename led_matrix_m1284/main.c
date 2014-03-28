@@ -9,7 +9,12 @@
 static const uint8_t NB_HORIZONTAL_MATRIX = 1;
 static const uint8_t NB_VERTICAL_MATRIX = 1;
 
-static const uint8_t NB_RESOLUTION_BITS = 3;
+#define NB_RESOLUTION_BITS 5
+// 1 matrix = max 5 bits
+// 2 matrix = max 4 bits
+// 3 matrix = max 3 bits
+// 4 matrix = max 2 bits
+#include "gamma.h"
 
 static const uint8_t NB_LINES_PER_MATRIX = 32;   // MUST be 32 (hard-coded assembly)
 static const uint8_t NB_COLUMNS_PER_MATRIX = 32; // MUST be 32 (hard-coded assembly)
@@ -85,7 +90,12 @@ static volatile uint8_t framebuffer[MATRIX_SCANLINE_SIZE * NB_RESOLUTION_BITS][N
  * @param g Color to set (Green).
  * @param b Color to set (Blue).
  */
-static void setPixelAt(const uint8_t x, const uint8_t y, const uint8_t r, const uint8_t g, const uint8_t b) {
+static void setPixelAt(const uint8_t x, const uint8_t y, uint8_t r, uint8_t g, uint8_t b) {
+  
+  /* Gamma correction */
+  r = gamma(r);
+  g = gamma(g);
+  b = gamma(b);
   
   /* Viva el offset */
   uint16_t pixelOffset = (NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT) - 1 - (x + (y / NB_LINES_PER_MATRIX * NB_COLUMNS_COUNT));
@@ -245,13 +255,14 @@ int main(void) {
     }
 	
 	/* Draw color pattern */
-	if(++r == (1 << NB_RESOLUTION_BITS)) {
+#define COLOR_STEP 15
+	if((r += COLOR_STEP) >= 256 - COLOR_STEP) {
       r = 0;
 		  
-	  if(++g == (1 << NB_RESOLUTION_BITS)) {
+	  if((g += COLOR_STEP) >= 256 - COLOR_STEP) {
         g = 0;
 		  
-		if(++b == (1 << NB_RESOLUTION_BITS)) {
+		if((b += COLOR_STEP) >= 256 - COLOR_STEP) {
           b = 0;
         }
       }
