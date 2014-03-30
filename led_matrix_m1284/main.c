@@ -6,10 +6,10 @@
 #include <string.h>        /* For memset() */
 
 /* Compile time constants */
-static const uint8_t NB_HORIZONTAL_MATRIX = 1;
+static const uint8_t NB_HORIZONTAL_MATRIX = 2;
 static const uint8_t NB_VERTICAL_MATRIX = 1;
 
-#define NB_RESOLUTION_BITS 5
+#define NB_RESOLUTION_BITS 4
 // 1 matrix = max 5 bits
 // 2 matrix = max 4 bits
 // 3 matrix = max 3 bits
@@ -96,7 +96,7 @@ static void setPixelAt(const uint8_t x, const uint8_t y, uint8_t r, uint8_t g, u
   r = gamma(r);
   g = gamma(g);
   b = gamma(b);
-  
+
   /* Viva el offset */
   uint16_t pixelOffset = (NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT) - 1 - (x + (y / NB_LINES_PER_MATRIX * NB_COLUMNS_COUNT));
   uint8_t scanlineOffset = y & (MATRIX_SCANLINE_SIZE - 1);
@@ -134,7 +134,7 @@ static void setPixelAt(const uint8_t x, const uint8_t y, uint8_t r, uint8_t g, u
 /**
  * Interruption routine - line refresh at 60Hz
  */
-ISR(TIMER3_COMPA_vect) {
+ISR(TIMER1_COMPA_vect) {
 
   // Scan line index & resolution bit index
   static uint8_t scanlineIndex = MATRIX_SCANLINE_SIZE - 1;
@@ -146,8 +146,8 @@ ISR(TIMER3_COMPA_vect) {
 	// Reset resolution bit index
 	resolutionBitIndex = 0;
 	
-	// Reset timer prescaler
-	OCR3A = (F_CPU / 60 / 16 / ((1 << NB_RESOLUTION_BITS) - 1)) - 1;
+	// Reset timer frequency
+	OCR1A = (F_CPU / 60 / 16 / ((1 << NB_RESOLUTION_BITS) - 1)) - 1;
 	
     // Handle scanline index overflow
     if (++scanlineIndex == MATRIX_SCANLINE_SIZE) {
@@ -159,7 +159,7 @@ ISR(TIMER3_COMPA_vect) {
   } else {
 	
     // Divide frequency by two
-    OCR3A <<= 1;
+    OCR1A <<= 1;
   }
   
   // Setup control lines and address lines
@@ -224,14 +224,14 @@ int main(void) {
   /* Init the framebuffer (all pixels black) */
   memset((void*) framebuffer, 0, MATRIX_SCANLINE_SIZE * NB_RESOLUTION_BITS * NB_MATRIX_COUNT * NB_COLUMNS_COUNT);
   
-  /* Setup refresh timer */
+  /* Setup refresh timer (16 bits) */
   cli();
-  TCCR3A = 0;                      // CTC mode
-  TCCR3B = _BV(WGM32) | _BV(CS30); // No prescaler
-  TCCR3C = 0;
-  TCNT3 = 0;                       // Counter reset
-  OCR3A = (F_CPU / 60 / 16 / ((1 << NB_RESOLUTION_BITS) - 1)) - 1; // ISR
-  TIMSK3 = _BV(OCIE3A);            // Enable timer 3's compare match A ISR
+  TCCR1A = 0;                      // CTC mode
+  TCCR1B = _BV(WGM12) | _BV(CS10); // No prescaler
+  TCCR1C = 0;
+  TCNT1 = 0;                       // Counter reset
+  OCR1A = (F_CPU / 60 / 16 / ((1 << NB_RESOLUTION_BITS) - 1)) - 1; // ISR
+  TIMSK1 = _BV(OCIE1A);            // Enable timer 1's compare match A ISR
   sei();
   
   /* Main loop */
