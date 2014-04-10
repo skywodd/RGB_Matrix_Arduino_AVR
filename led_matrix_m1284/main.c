@@ -222,7 +222,7 @@ int main(void) {
   CTRL_PORT = (CTRL_PORT & ~CTRL_MASK) | CTRL_OE_PIN | CTRL_LAT_PIN;
 
   /* Init the framebuffer (all pixels black) */
-  memset((void*) framebuffer, 0, MATRIX_SCANLINE_SIZE * NB_RESOLUTION_BITS * NB_MATRIX_COUNT * NB_COLUMNS_COUNT);
+  memset((void*) framebuffer, 0, MATRIX_SCANLINE_SIZE * NB_RESOLUTION_BITS * NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT);
   
   /* Setup refresh timer (16 bits) */
   cli();
