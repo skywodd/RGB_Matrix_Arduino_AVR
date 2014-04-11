@@ -196,7 +196,7 @@ void setup() {
   CTRL_PORT = (CTRL_PORT & ~CTRL_MASK) | CTRL_OE_PIN;
   
   // Init frame buffers (all pixels black)
-  memset((void*) framebuffer, 0, NB_LINES_COUNT * (NB_COLUMNS_COUNT / 8) * 3);
+  memset((void*) framebuffer, 0, MATRIX_SCANLINE_SIZE * (NB_LINES_COUNT / MATRIX_SCANLINE_SIZE) * (NB_COLUMNS_COUNT / 8) * 3);
 
   // Init refresh timer
   MsTimer2::set(1, refreshDisplay);
