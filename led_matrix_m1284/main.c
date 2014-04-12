@@ -9,11 +9,8 @@
 static const uint8_t NB_HORIZONTAL_MATRIX = 2;
 static const uint8_t NB_VERTICAL_MATRIX = 1;
 
+// Gamma correction table
 #define NB_RESOLUTION_BITS 4
-// 1 matrix = max 5 bits
-// 2 matrix = max 4 bits
-// 3 matrix = max 3 bits
-// 4 matrix = max 2 bits
 #include "gamma.h"
 
 static const uint8_t NB_LINES_PER_MATRIX = 32;   // MUST be 32 (hard-coded assembly)
