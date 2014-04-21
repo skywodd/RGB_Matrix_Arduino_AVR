@@ -96,7 +96,7 @@ enum {
  * @param Color Color to set.
  */
 static void setPixelAt(const uint8_t x, const uint8_t y, const uint8_t color) {
-  volatile uint8_t* pixel = &framebuffer[y & (MATRIX_SCANLINE_SIZE - 1)][(NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT) - 1 - (x + (y / NB_LINES_PER_MATRIX * NB_COLUMNS_COUNT))];
+  volatile uint8_t* pixel = &framebuffer[y & (MATRIX_SCANLINE_SIZE - 1)][x + (y / NB_LINES_PER_MATRIX * NB_COLUMNS_COUNT)];
   uint8_t bitsOffset = ((y & (NB_LINES_PER_MATRIX - 1)) > 15) ? 5 : 2;
   const uint8_t colorTable[] = {
     // COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_YELLOW, COLOR_CYAN, COLOR_PINK, COLOR_WHITE, COLOR_BLACK
@@ -113,7 +113,7 @@ static void setPixelAt(const uint8_t x, const uint8_t y, const uint8_t color) {
  * @return The color of the pixel.
  */
 static uint8_t getPixelAt(const uint8_t x, const uint8_t y) {
-  uint8_t pixel = framebuffer[y & (MATRIX_SCANLINE_SIZE - 1)][(NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT) - 1 - (x + (y / NB_LINES_PER_MATRIX * NB_COLUMNS_COUNT))];
+  uint8_t pixel = framebuffer[y & (MATRIX_SCANLINE_SIZE - 1)][x + (y / NB_LINES_PER_MATRIX * NB_COLUMNS_COUNT)];
   uint8_t bitsOffset = ((y & (NB_LINES_PER_MATRIX - 1)) > 15) ? 5 : 2;
   const uint8_t colorTable[] = {
     COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE, COLOR_PINK, COLOR_CYAN, COLOR_WHITE
@@ -135,12 +135,15 @@ ISR(TIMER2_COMPA_vect) {
 
   // Get line buffer
   uint8_t *lineBuffer = (uint8_t*) framebuffer[scanlineIndex];
-
+  
+  // Go to the end of the buffer + 1
+  lineBuffer += NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT;
+  
   // Constant variable for the inline assembly
   const uint8_t clkPinMask = CTRL_CLK_PIN; // CLK pin mask
   
   // One pixel macro
-#define LD_PX "ld __tmp_reg__, %a2+\n\t" \
+#define LD_PX "ld __tmp_reg__, -%a2\n\t" \
 			  "out %0, __tmp_reg__\n\t"  \
 			  "out %1, %3\n\t"           \
 			  "out %1, %3\n\t" // 2 + 1 + 1 + 1 = 5 ticks

@@ -90,12 +90,15 @@ static volatile uint8_t framebuffer[MATRIX_SCANLINE_SIZE * NB_RESOLUTION_BITS][N
 static void setPixelAt(const uint8_t x, const uint8_t y, uint8_t r, uint8_t g, uint8_t b) {
   
   /* Gamma correction */
+  //r = (r) >> (8 - NB_RESOLUTION_BITS);
   r = gamma(r);
+  //g = (g) >> (8 - NB_RESOLUTION_BITS);
   g = gamma(g);
+  //b = (b) >> (8 - NB_RESOLUTION_BITS);
   b = gamma(b);
 
   /* Viva el offset */
-  uint16_t pixelOffset = (NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT) - 1 - (x + (y / NB_LINES_PER_MATRIX * NB_COLUMNS_COUNT));
+  uint16_t pixelOffset = x + (y / NB_LINES_PER_MATRIX * NB_COLUMNS_COUNT);
   uint8_t scanlineOffset = y & (MATRIX_SCANLINE_SIZE - 1);
   uint8_t bitsOffset = ((y & (NB_LINES_PER_MATRIX - 1)) > 15) ? 5 : 2;
   
@@ -166,11 +169,14 @@ ISR(TIMER1_COMPA_vect) {
   // Get line buffer
   uint8_t *lineBuffer = (uint8_t*) framebuffer[scanlineIndex + resolutionBitIndex * MATRIX_SCANLINE_SIZE];
 
+  // Go to the end of the buffer + 1
+  lineBuffer += NB_VERTICAL_MATRIX * NB_COLUMNS_COUNT;
+  
   // Constant variable for the inline assembly
   const uint8_t clkPinMask = CTRL_CLK_PIN; // CLK pin mask
   
   // One pixel macro
-#define LD_PX "ld __tmp_reg__, %a2+\n\t" \
+#define LD_PX "ld __tmp_reg__, -%a2\n\t" \
 			  "out %0, __tmp_reg__\n\t"  \
 			  "out %1, %3\n\t"           \
 			  "out %1, %3\n\t" // 2 + 1 + 1 + 1 = 5 ticks
