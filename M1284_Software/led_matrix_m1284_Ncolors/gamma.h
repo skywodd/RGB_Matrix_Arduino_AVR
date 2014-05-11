@@ -1,8 +1,12 @@
+/* ----- BEGIN OF AUTO-GENERATED CODE - DO NOT EDIT ----- */
+
 #ifndef GAMMA_H_
 #define GAMMA_H_
 
+/* Dependencies for PROGMEM */
 #include <avr/pgmspace.h>
 
+/** Gamma table in flash memory. */
 static const uint8_t PROGMEM _gamma[] = {
 #if NB_RESOLUTION_BITS == 1
   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 
@@ -96,8 +100,16 @@ static const uint8_t PROGMEM _gamma[] = {
 #endif
 };
 
+/**
+ * Turn a 8-bits value into a NB_RESOLUTION_BITS value with gamma correction.
+ *
+ * @param x The input 8-bits value.
+ * @return The output NB_RESOLUTION_BITS value with gamma correction.
+ */
 static inline uint8_t gamma(uint8_t x) {
   return pgm_read_byte(&_gamma[x]);
 }
 
 #endif /* GAMMA_H_ */
+
+/* ----- END OF AUTO-GENERATED CODE ----- */

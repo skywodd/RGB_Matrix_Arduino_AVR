@@ -20,3 +20,9 @@ Can go up to 32K colors with a single matrix and to 4K colors with 4 matrix.
 ---
 
 M1284 is the lastest code version.
+
+
+---
+
+Remarks:
+For gamma correction table generator and pre-generated table take a look at the "tool_gamma_correction" directory.
