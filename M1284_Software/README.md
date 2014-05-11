@@ -1,25 +1,22 @@
-# Demonstration code for Arduino boards
+# Released code for ATmega1254p based boards
 ## By Fabien Batteix (alias SkyWodd)
 
-This directory contain some demonstration code for driving RGB leds matrix using an Arduino boards.
+This directory contain all released code versions for driving RGB leds matrix using an ATmega1284p based board.
+
+Backward compatibily with Arduino Mega2560 and UNO boards is included but not fully tested.
+This code is designed to run on an ATmega1284p mcu, use at your own risk.
 
 ---
 
-Demo 1 is a pure Arduino-based implementation of the code. 
-This version is for educational purpose only and not usable for real-world usage.
-This version is really slow but compatible with any Arduino-like boards (chipkit, Maple, etc).
+M1284_8colors is an heavily optimized version of the Arduino-based demo 3 code with lot of compile-time constant.
+No more runtime loops, all the job is done as fast as possible by using low-level hand-crafted assembly and GCC tricks.
 
 ---
 
-Demo 2 is an optimized version of the demo 1 using low-level AVR IO registers and some tricks.
-This version is made to work on Arduino UNO and Arduino Mega2560 only.
+M1284_Ncolors is an upgraded version of the basic 8 colors one.
+This version use Binary Coded Modulation (BCM) to get far over the 8 colors limit.
+Can go up to 32K colors with a single matrix and to 4K colors with 4 matrix.
 
 ---
 
-Demo 3 is an really-optimized version of the demo 1 and 2. 
-This version use only AVR registers, AVR interrupts, lot of tricks and some memory management tips.
-This version can be used for real-world usage and can also be used as a good base for driving other type of leds matrix (with another hardware configuration).
-
-Warning: The code itself is not loop-optimized, all computation of loop indexes are made at runtime. 
-This slow-down the code and make it more "fat" but allow you to change it as you need for driving uncommon type of led matrix.
-For really-really-optimized and fast version take a look at the M1284_Software directory.
+M1284 is the lastest code version.
