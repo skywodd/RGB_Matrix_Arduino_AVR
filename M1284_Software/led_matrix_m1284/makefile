@@ -5,13 +5,22 @@ TARGET ?= atmega1284p
 F_CPU ?= 16000000
 
 # Source files to compile
-SOURCES = main.c
+SOURCES = main.c RgbMatrix.c
 
 # Output project name
 OUTPUT = rgbLedMatrix
 
 # Programmer name
 AVRDUDE_PROGRAMMER ?= usbtiny
+
+# RGB Matrix configuration
+CCFLAGS += -DUSE_GAMMA_CORRECTION
+CCFLAGS += -DUSE_DOUBLE_BUFFERING
+#CCFLAGS += -DUSE_TRIPLE_BUFFERING
+CCFLAGS += -DNB_HORIZONTAL_MATRIX=2
+CCFLAGS += -DNB_VERTICAL_MATRIX=1
+CCFLAGS += -DNB_RESOLUTION_BITS=4
+#CCFLAGS += -DLINE_REFRESH_FREQUENCY=60
 
 # Compilator switch
 CCFLAGS += -Wall -Os -ffunction-sections
